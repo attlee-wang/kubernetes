@@ -657,14 +657,9 @@ var _ = SIGDescribe("SchedulerPredicates [Serial]", func() {
 		Release: v1.16
 		Testname: Scheduling, HostPort matching and HostIP and Protocol not-matching
 		Description: Pods with the same HostPort value MUST be able to be scheduled to the same node
-		if the HostIP or Protocol is different. This test is marked LinuxOnly since hostNetwork is not supported on
-		Windows.
+		if the HostIP or Protocol is different.
 	*/
-
-	// TODO: Add a new e2e test to scheduler which validates if hostPort is working and move this test to e2e/network
-	//		 so that appropriate team owns the e2e.
-	//		 xref: https://github.com/kubernetes/kubernetes/issues/98075.
-	framework.ConformanceIt("validates that there is no conflict between pods with same hostPort but different hostIP and protocol [LinuxOnly]", func() {
+	framework.ConformanceIt("validates that there is no conflict between pods with same hostPort but different hostIP and protocol", func() {
 
 		nodeName := GetNodeThatCanRunPod(f)
 		localhost := "127.0.0.1"
@@ -887,8 +882,8 @@ func initPausePod(f *framework.Framework, conf pausePodConfig) *v1.Pod {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            conf.Name,
 			Namespace:       conf.Namespace,
-			Labels:          conf.Labels,
-			Annotations:     conf.Annotations,
+			Labels:          map[string]string{},
+			Annotations:     map[string]string{},
 			OwnerReferences: conf.OwnerReferences,
 		},
 		Spec: v1.PodSpec{
@@ -907,6 +902,12 @@ func initPausePod(f *framework.Framework, conf pausePodConfig) *v1.Pod {
 			PriorityClassName:             conf.PriorityClassName,
 			TerminationGracePeriodSeconds: &gracePeriod,
 		},
+	}
+	for key, value := range conf.Labels {
+		pod.ObjectMeta.Labels[key] = value
+	}
+	for key, value := range conf.Annotations {
+		pod.ObjectMeta.Annotations[key] = value
 	}
 	// TODO: setting the Pod's nodeAffinity instead of setting .spec.nodeName works around the
 	// Preemption e2e flake (#88441), but we should investigate deeper to get to the bottom of it.
